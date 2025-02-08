@@ -1,0 +1,4 @@
+ID,Data,Status,Cliente_ID,Funcionario_ID,Serviço_ID
+1,2025-02-10,Confirmado,1,1,1
+2,2025-02-12,Pendente,2,2,2
+3,2025-02-15,Cancelado,3,3,3

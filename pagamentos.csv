@@ -1,0 +1,4 @@
+ID,Valor,Forma,Status,Cliente_ID
+1,150.0,Cartão,Pago,1
+2,300.0,Dinheiro,Pendente,2
+3,250.0,Pix,Pago,3

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Gestão - Limpeza de Carpete</title>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; display: flex; }
+        .sidebar { width: 250px; background-color: #575757; color: white; height: 100vh; padding-top: 20px; position: fixed; }
+        .sidebar a { display: flex; align-items: center; color: white; text-decoration: none; padding: 15px; }
+        .sidebar a:hover, .dropdown-content a:hover { background-color: #575757; }
+        .sidebar i { margin-right: 10px; }
+        .content { margin-left: 0; padding: 20px; flex-grow: 1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .hidden { display: none; }
+        .dropdown { position: relative; }
+        .dropdown-content { display: none; position: absolute; background-color: #444; min-width: 200px; z-index: 1; }
+        .dropdown-content a { color: white; padding: 10px; display: block; text-decoration: none; }
+        .dropdown:hover .dropdown-content { display: block; }
+        .dashboard-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+        
+        .dashboard-container {
+            display: flex;
+            flex-wrap: wrap; /* Permite que os cards quebrem a linha se necessário */
+            justify-content: center; /* Centraliza os cards na tela */
+            gap: 20px; /* Espaçamento entre os cards */
+            padding: 20px;
+            max-width: 1200px; /* Limita a largura máxima para evitar esticar demais */
+            margin: 0 auto; /* Centraliza horizontalmente */
+        }
+
+        /* Ajuste para os cards */
+        .card {
+            width: 250px;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(253, 251, 251, 0.1);
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            color: var(--text-color)!important; /* Forçando o texto a mudar no tema escuro */
+            background-color: #007bff; /* Ajuste conforme necessário */
+        }
+
+
+        .card i { font-size: 30px; margin-bottom: 10px; }
+
+        /* Cores funcionando corretamente */
+        .blue { background-color: #4A90E2; }
+        .green { background-color: #50C878; }
+        .red { background-color: #FF4C4C; }
+        .orange { background-color: #FFA500; }
+
+        .logo-container {
+    text-align: center;
+            padding: 10px;
+        }
+
+        .logo-container img {
+            width: 150px; /* Ajuste o tamanho conforme necessário */
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none; /* Escondido por padrão */
+        }
+
+        .spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px; /* Ajuste a altura conforme necessário */
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Para distribuir o logo e os links */
+            padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .logo-container img {
+            height: 40px;
+        }
+
+        .navbar nav {
+            display: flex;
+            gap: 15px;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            padding: 10px;
+            transition: background 0.3s;
+        }
+
+        .navbar a:hover {
+            background: #c70909;
+            border-radius: 5px;
+        }
+
+        /* Ajustar o espaço para que o conteúdo não fique escondido atrás da navbar */
+        body {
+            padding-top: 60px; /* Igual à altura da navbar */
+        }
+
+        .form-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            width: 48%;
+        }
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .btn-submit {
+            background: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-submit:hover {
+            background: #218838;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        /* Tema Claro (Padrão) */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333;
+            --navbar-bg: #333;
+            --navbar-text: #ffffff;
+        }
+
+        /* Tema Escuro */
+        .dark-theme {
+            --bg-color: #222;
+            --text-color: #a9a8b1 !important;
+            --navbar-bg: #000;
+            --navbar-text: #dddddd;
+        }
+
+        /* Aplicando as variáveis ao layout */
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .navbar {
+            background: var(--navbar-bg);
+            color: var(--navbar-text);
+        }
+
+        .theme-button {
+        background: none;
+        border: 2px solid white;
+            color: white;
+            padding: 8px 12px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+            margin-left: auto; /* Move o botão para a direita */
+        }
+
+        .theme-button:hover {
+            background: white;
+            color: #333;
+        }
+
+
+
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt=" ">
+        </div>
+        <a href="#" onclick="mostrarSecao('gestao')">
+            <i class="fas fa-building"></i> Minha Empresa
+        </a>
+        <div class="dropdown">
+            <a href="#">
+                <i class="fas fa-database"></i> Base de Dados
+            </a>
+            <div class="dropdown-content">
+                <a href="#" onclick="mostrarSecao('base')">
+                    <i class="fas fa-table"></i> Ver Base de Dados
+                </a>
+            </div>
+        </div>
+        <a href="#" onclick="mostrarSecao('estoque')">
+            <i class="fas fa-boxes"></i> Estoque de Produtos
+        </a>
+
+        <a href="#" onclick="mostrarSecao('dashboard')">
+            <i class="fas fa-chart-bar"></i> Dashboard
+        </a>
+
+        <a href="#" onclick="mostrarSecao('ordens_servico')">
+            <i class="fas fa-clipboard-list"></i> Ordens de Serviço
+        </a>        
+
+        <a href="#" onclick="mostrarSecao('vendas')">
+            <i class="fas fa-shopping-cart"></i> Vendas
+        </a>
+        
+        <a href="#" onclick="mostrarSecao('clientes')">
+            <i class="fas fa-user"></i> Cliente
+        </a>
+        
+        <a href="#" onclick="mostrarSecao('fornecedores')">
+            <i class="fas fa-truck"></i> Fornecedor
+        </a>
+        
+        <a href="#" onclick="mostrarSecao('relatorios')">
+            <i class="fas fa-chart-bar"></i> Relatório
+        </a>
+        
+        <a href="#" onclick="mostrarSecao('tarefas')">
+            <i class="fas fa-tasks"></i> Tarefas
+        </a>
+        
+        
+        <a href="#" onclick="mostrarSecao('financas')">
+            <i class="fas fa-coins"></i> Finanças
+        </a>        
+
+        <a href="#" onclick="mostrarSecao('configuracoes')">
+            <i class="fas fa-cogs"></i> Configurações
+        </a>
+        <button id="toggleTheme" class="theme-button">
+            🌙 Alternar Tema
+        </button>
+        
+    </div>
+    
+
+    <div class="content">
+        <div id="gestao" class="container">
+            <h1>Painel de Gestão</h1>
+            <h2>Resumo dos Agendamentos</h2>
+            <table id="resumo">
+                <tr>
+                    <th>Cliente</th>
+                    <th>Serviço</th>
+                    <th>Funcionário</th>
+                    <th>Data</th>
+                    <th>Forma de Pagamento</th>
+                    <th>Status do Pagamento</th>
+                    <th>Status do Agendamento</th>
+                </tr>
+            </table>
+        </div>
+
+        <div id="base" class="container hidden">
+            <h1>Base de Dados</h1>
+            <h2>Clientes</h2>
+            <table id="clientes"></table>
+            <h2>Serviços</h2>
+            <table id="servicos"></table>
+            <h2>Funcionários</h2>
+            <table id="funcionarios"></table>
+            <h2>Agendamentos</h2>
+            <table id="agendamentos"></table>
+            <h2>Pagamentos</h2>
+            <table id="pagamentos"></table>
+        </div>
+
+        <div id="estoque" class="container hidden">
+        <h1>Estoque de Produtos</h1>
+        <div class="estoque-info">
+            <label for="categoriaFiltro"><strong>Categoria:</strong></label>
+            <select id="categoriaFiltro" onchange="filtrarProdutos()">
+                <option value="todos">Todos os produtos</option>
+                <option value="limpeza">Limpeza</option>
+                <option value="quimicos">Químicos</option>
+                <option value="outros">Outros</option>
+            </select>
+            <p><strong>Total:</strong> 3</p>
+            <button class="btn" onclick="exportarProdutos()">Exportação</button>
+            <button class="btn" onclick="importarProdutos()">Importar</button>
+        </div>
+        
+        <h2>Adicionar Novo Produto</h2>
+        <form id="formAdicionarProduto" class="form-container">
+            <div class="form-group">
+                <label for="idProduto">ID:</label>
+                <input type="text" id="idProduto" name="idProduto" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="codigoProduto">Código:</label>
+                <input type="text" id="codigoProduto" name="codigoProduto" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="nomeProduto">Nome:</label>
+                <input type="text" id="nomeProduto" name="nomeProduto" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="descricaoProduto">Descrição:</label>
+                <input type="text" id="descricaoProduto" name="descricaoProduto" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="quantidadeProduto">Quantidade:</label>
+                <input type="number" id="quantidadeProduto" name="quantidadeProduto" required>
+            </div>
+            
+            <button type="submit" class="btn-submit">Adicionar Produto</button>
+        </form>
+        
+        <table id="produtos">
+            <tr>
+                <th>ID</th>
+                <th>Código</th>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Quantidade</th>
+                <th>Ações</th>
+            </tr>
+            <tr class="produto" data-categoria="quimicos">
+                <td>2100000000012</td>
+                <td>4321</td>
+                <td>Chemspec Stain Exit 946ml</td>
+                <td>Chemspec Stain Exit 946ml</td>
+                <td>2</td>
+                <td><input type="checkbox"></td>
+            </tr>
+            <tr class="produto" data-categoria="limpeza">
+                <td>2100000000050</td>
+                <td>0909</td>
+                <td>Glass and Surface Cleaner Kiehl GlasQueen 500ml</td>
+                <td>Glass and Surface Cleaner Kiehl GlasQueen 500ml</td>
+                <td>1</td>
+                <td><input type="checkbox"></td>
+            </tr>
+            <tr class="produto" data-categoria="quimicos">
+                <td>2100000000036</td>
+                <td>8765</td>
+                <td>Mould Remover TENZI</td>
+                <td>Mould Remover TENZI</td>
+                <td>1</td>
+                <td><input type="checkbox"></td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        function filtrarProdutos() {
+            var categoriaSelecionada = document.getElementById("categoriaFiltro").value;
+            var produtos = document.querySelectorAll(".produto");
+            
+            produtos.forEach(produto => {
+                if (categoriaSelecionada === "todos" || produto.dataset.categoria === categoriaSelecionada) {
+                    produto.style.display = "";
+                } else {
+                    produto.style.display = "none";
+                }
+            });
+        }
+    </script>
+
+        <div id="dashboard" class="container hidden">
+            <h1>Painel</h1>
+            <div class="dashboard-container">
+                <div class="card blue"><i class="fa-solid fa-calendar-check"></i> Ordens de Serviço Hoje <br> 0</div>
+                <div class="card green"><i class="fa-solid fa-dollar-sign"></i> Vendas Hoje <br> R$ 0</div>
+                <div class="card red"><i class="fa-solid fa-money-bill-wave"></i> Receitas Hoje <br> R$ 0</div>
+                <div class="card orange"><i class="fa-solid fa-user-clock"></i> Cliente Reembolsa Hoje <br> R$ 0</div>
+                <div class="card blue"><i class="fa-solid fa-star"></i> Novo <br> 0%</div>
+                <div class="card red"><i class="fa-solid fa-exclamation-triangle"></i> Urgente <br> 0%</div>
+                <div class="card orange"><i class="fa-solid fa-clock"></i> Atrasado <br> 0%</div>
+                <div class="card green"><i class="fa-solid fa-hand-holding-usd"></i> Recebíveis <br> R$ 0</div>
+                <div class="card blue"><i class="fa-solid fa-wallet"></i> Dinheiro Total em Caixas <br> R$ 0</div>
+                <div class="card red"><i class="fa-solid fa-exclamation-circle"></i> Ordens Abandonadas <br> 0</div>
+                <div class="card green"><i class="fa-solid fa-chart-line"></i> Receita do Mês <br> R$ 0</div>
+                <div class="card orange"><i class="fa-solid fa-chart-pie"></i> Conversão <br> 0%</div>
+                <div class="card blue"><i class="fa-solid fa-medal"></i> Classificação da Empresa <br> 0</div>
+            </div>                
+        </div>
+
+
+        <div id="loading" class="loading-overlay">
+            <div class="spinner"></div>
+        </div>      
+               
+        
+        <div id="configuracoes" class="container hidden">
+            <h1>Configurações</h1>
+            <p>Ajuste as configurações do sistema aqui.</p>
+        </div>
+    </div>
+
+    <script>
+        function mostrarSecao(secao) {
+            document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
+            document.getElementById(secao).classList.remove('hidden');
+        }
+
+        
+        
+        function carregarDados(url, tabela) {
+            $("#loading").show(); // Exibir spinner
+
+            $.getJSON(url, function(data) {
+                if (data.length > 0) {
+                    let cabecalho = "<tr>";
+                    let chaves = Object.keys(data[0]);
+
+                    chaves.forEach(key => {
+                        let tituloFormatado = key.replace(/_/g, " ").toUpperCase(); 
+                        cabecalho += `<th>${tituloFormatado}</th>`;
+                    });
+                    cabecalho += "<th>Ações</th></tr>"; 
+
+                    let linhas = data.map(obj => {
+                        let linha = "<tr>";
+                        chaves.forEach(key => {
+                            let valor = obj[key] !== undefined ? obj[key] : "N/A"; 
+                            linha += `<td>${valor}</td>`;
+                        });
+
+                        linha += `<td>
+                                    <button class="editar" data-id="${obj.ID}">✏️</button>
+                                    <button class="deletar" data-id="${obj.ID}">🗑️</button>
+                                </td>`;
+                        linha += "</tr>";
+                        return linha;
+                    }).join("");
+
+                    $(tabela).html(cabecalho + linhas);
+                } else {
+                    $(tabela).html('<tr><td colspan="100%">Nenhum dado disponível</td></tr>');
+                }
+            }).fail(function() {
+                $(tabela).html('<tr><td colspan="100%">Erro ao carregar os dados</td></tr>');
+            }).always(function() {
+                $("#loading").hide(); 
+            });
+        }
+
+        // 🔹 Abre o modal para adicionar novos dados
+        $("#adicionarNovo").click(function() {
+            $("#camposFormulario").empty();
+            
+            // Gerar campos dinamicamente com base nos cabeçalhos da tabela
+            let cabecalhos = $("#tabelaDados th").not(":last").map(function() { return $(this).text(); }).get();
+            cabecalhos.forEach(campo => {
+                $("#camposFormulario").append(`<label>${campo}: <input type="text" name="${campo}" required></label><br>`);
+            });
+
+            $("#modalAdicionar").show();
+        });
+
+        // 🔹 Fecha o modal
+        $("#fecharModal").click(function() {
+            $("#modalAdicionar").hide();
+        });
+
+        // 🔹 Enviar os novos dados para o backend
+        $("#formAdicionar").submit(function(event) {
+            event.preventDefault();
+            let novoDado = {};
+            
+            $("#formAdicionar input").each(function() {
+                novoDado[$(this).attr("name")] = $(this).val();
+            });
+
+            $.ajax({
+                url: "/adicionar", 
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(novoDado),
+                success: function(response) {
+                    alert(response.message);
+                    $("#modalAdicionar").hide();
+                    carregarDados("/dados", "#tabelaDados");
+                }
+            });
+        });
+        // Mostrar o spinner antes de carregar os dados iniciais
+        $(document).ready(function() {
+            $("#loading").show();
+
+            Promise.all([
+                carregarDados('/clientes', '#clientes'),
+                carregarDados('/servicos', '#servicos'),
+                carregarDados('/funcionarios', '#funcionarios'),
+                carregarDados('/agendamentos', '#agendamentos'),
+                carregarDados('/pagamentos', '#pagamentos'),
+                carregarDados('/estoque', '#produtos'),
+                carregarResumo()
+            ]).then(() => {
+                $("#loading").hide(); // Esconde o spinner quando todos os dados forem carregados
+            });
+
+            mostrarSecao('gestao');
+        });
+
+        
+        function formatarStatus(status) {
+    switch (status.toLowerCase()) {
+        case "pago": return '<span style="color: green; font-weight: bold;">Pago</span>';
+        case "pendente": return '<span style="color: orange; font-weight: bold;">Pendente</span>';
+        case "cancelado": return '<span style="color: red; font-weight: bold;">Cancelado</span>';
+        case "confirmado": return '<span style="color: blue; font-weight: bold;">Confirmado</span>'; // Adicionando cor ao status Confirmado
+        default: return status;
+    }
+}
+
+
+    function carregarResumo() {
+        $.getJSON('/agendamentos', function(agendamentos) {
+            $.getJSON('/clientes', function(clientes) {
+                $.getJSON('/servicos', function(servicos) {
+                    $.getJSON('/funcionarios', function(funcionarios) {
+                        $.getJSON('/pagamentos', function(pagamentos) {
+                            let tabela = "";
+                            agendamentos.forEach(ag => {
+                                let cliente = clientes.find(c => c.ID == ag.Cliente_ID)?.Nome || "Desconhecido";
+                                let servico = servicos.find(s => s.ID == ag.Serviço_ID)?.Tipo || "Desconhecido";
+                                let funcionario = funcionarios.find(f => f.ID == ag.Funcionario_ID)?.Nome || "Desconhecido";
+                                let pagamento = pagamentos.find(p => p.Cliente_ID == ag.Cliente_ID);
+                                let formaPagamento = pagamento ? pagamento.Forma : "N/A";
+                                let statusPagamento = pagamento ? formatarStatus(pagamento.Status) : "N/A";
+                                let statusAgendamento = formatarStatus(ag.Status);
+                                
+                                tabela += `<tr>
+                                    <td>${cliente}</td>
+                                    <td>${servico}</td>
+                                    <td>${funcionario}</td>
+                                    <td>${ag.Data}</td>
+                                    <td>${formaPagamento}</td>
+                                    <td>${statusPagamento}</td>
+                                    <td>${statusAgendamento}</td>
+                                </tr>`;
+                            });
+                            $('#resumo').append(tabela);
+                        });
+                    });
+                });
+            });
+        });
+    }
+
+        
+        $(document).ready(function() {
+            carregarDados('/clientes', '#clientes');
+            carregarDados('/servicos', '#servicos');
+            carregarDados('/funcionarios', '#funcionarios');
+            carregarDados('/agendamentos', '#agendamentos');
+            carregarDados('/pagamentos', '#pagamentos');
+            carregarDados('/estoque', '#produtos');
+            carregarResumo();
+            mostrarSecao('gestao');
+        });
+    </script>
+
+    <script>
+        const toggleButton = document.getElementById("toggleTheme");
+
+        if (localStorage.getItem("theme") === "dark") {
+            document.body.classList.add("dark-theme");
+            toggleButton.innerText = "☀️ Alternar Tema";
+        }
+
+        toggleButton.addEventListener("click", () => {
+            document.body.classList.toggle("dark-theme");
+
+            if (document.body.classList.contains("dark-theme")) {
+                localStorage.setItem("theme", "dark");
+                toggleButton.innerText = "☀️ Alternar Tema";
+            } else {
+                localStorage.setItem("theme", "light");
+                toggleButton.innerText = "🌙 Alternar Tema";
+            }
+        });
+    </script>
+
+</body>
+</html>
