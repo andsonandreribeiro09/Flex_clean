@@ -53,7 +53,7 @@
         }
 
 
-        .card i { font-size: 5px; margin-bottom: 5px; }
+        .card i { font-size: 30px; margin-bottom: 10px; }
 
         /* Cores funcionando corretamente */
         .blue { background-color: #4A90E2; }
@@ -458,8 +458,100 @@
 
         <div id="loading" class="loading-overlay">
             <div class="spinner"></div>
-        </div>      
-               
+        </div>  
+        
+        
+        <div id="ordens_servico" class="container hidden">
+            <h1>Ordens de Serviço</h1>
+            <form id="formOrdemServico" class="form-container">
+                <div class="form-group">
+                    <label for="cliente">Cliente:</label>
+                    <input type="text" id="cliente" name="cliente" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="scheduled_for">Scheduled for:</label>
+                    <input type="datetime-local" id="scheduled_for" name="scheduled_for" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="duracao">Duração:</label>
+                    <input type="text" id="duracao" name="duracao" value="1h 0min" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="recurso">Recurso:</label>
+                    <input type="text" id="recurso" name="recurso" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="service_type">Service Type:</label>
+                    <select id="service_type" name="service_type" required>
+                        <option value="">Selecione um tipo</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="object_type">Object Type:</label>
+                    <input type="text" id="object_type" name="object_type" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="area">Área (sq. ft):</label>
+                    <input type="number" id="area" name="area" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="order_description">Order Description:</label>
+                    <textarea id="order_description" name="order_description" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="additional_info">Additional Info:</label>
+                    <input type="text" id="additional_info" name="additional_info">
+                </div>
+                
+                <div class="form-group">
+                    <label for="ad_campaign">Ad Campaign:</label>
+                    <select id="ad_campaign" name="ad_campaign">
+                        <option value="">Não especificado</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="Google">Google</option>
+                        <option value="Instagram">Instagram</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="manager_notes">Notas do gerente:</label>
+                    <textarea id="manager_notes" name="manager_notes" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="urgent">Urgente:</label>
+                    <input type="checkbox" id="urgent" name="urgent">
+                </div>
+                
+                <div class="form-group">
+                    <label for="due_date">Due Date:</label>
+                    <input type="datetime-local" id="due_date" name="due_date" required>
+                </div>
+                
+                <button type="submit" class="btn-submit">Criar Ordem de Serviço</button>
+            </form>
+            
+            <h2>Lista de Ordens de Serviço</h2>
+            <table id="tabelaOrdensServico">
+                <tr>
+                    <th>Cliente</th>
+                    <th>Scheduled For</th>
+                    <th>Service Type</th>
+                    <th>Área</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </table>
+        </div>                 
+                       
         
         <div id="configuracoes" class="container hidden">
             <h1>Configurações</h1>
@@ -653,5 +745,50 @@
         });
     </script>
 
+    <script>
+        document.getElementById("formOrdemServico").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let formData = new FormData(this);
+            let ordem = {};
+            formData.forEach((value, key) => ordem[key] = value);
+            
+            let tabela = document.getElementById("tabelaOrdensServico");
+            let newRow = tabela.insertRow(-1);
+            newRow.innerHTML = `<td>${ordem.cliente}</td>
+                                <td>${ordem.scheduled_for}</td>
+                                <td>${ordem.service_type}</td>
+                                <td>${ordem.area} sq. ft</td>
+                                <td>Pendente</td>
+                                <td><button onclick="removerOrdem(this)">❌</button></td>`;
+            this.reset();
+        });
+
+        function removerOrdem(button) {
+            let row = button.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+        }
+
+        // Função para buscar os tipos de serviço do backend e preencher o select
+        function carregarTiposServico() {
+            fetch('/api/tipos_servico')  // Rota Flask para buscar os tipos de serviço
+                .then(response => response.json())
+                .then(data => {
+                    let select = document.getElementById("service_type");
+                    data.tipos.forEach(tipo => {
+                        let option = document.createElement("option");
+                        option.value = tipo.nome;
+                        option.textContent = tipo.nome;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("Erro ao buscar tipos de serviço:", error));
+        }
+
+        // Chamar a função ao carregar a página
+        document.addEventListener("DOMContentLoaded", carregarTiposServico);
+    </script>
+
+    
 </body>
 </html>
+
